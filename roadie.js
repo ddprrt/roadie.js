@@ -2,115 +2,126 @@ var Roadie = function(w, d) {
 
 	var map;
 	var audio = new Audio();
+	var fileExt;
+	var canPlay;
+	var useFile;
+	var assetDir = 'assets';
+	var firstTime;
 
+	var playFunc = noop;
 
-	var init = function(m) {
+	function init(m, ad) {
 		map = m;
+		if(!!ad) {
+			assetDir = ad
+		}
 	}
-	
-	/*Soundmanager.prototype = {
-	
-		constructor: Soundmanager
 
-		, testFormat : function() {
-			this.canPlay = true;
-			if (this.audio.canPlayType('audio/mpeg') != "") {
-				this.fileExt = "mp3";
-			} else if (this.audio.canPlayType('audio/wav') != "") {
-				this.fileExt = "wav";
-			} else {
-				this.canPlay = false;
+	function noop() {}
+
+	function setup() {
+		testFormat();
+		testUseFile(function() {
+			playFunc = useFile ? playFile : playSpriteEntry;
+
+			if(map && !useFile) {
+				firstTime = true;
 			}
-		}
+		});
+	}
 
-		, setup : function() {
-			var that = this;
-			that.testFormat();
-			that.testUseFile(function () {
-				that.play = that.useFile ? that.playFile : that.playSpriteEntry;
-				if(that.map && !that.useFile) {
-					that.firstTime = true;
+	function testFormat() {
+		canPlay = true;
+		if (audio.canPlayType('audio/mpeg') != "") {
+			fileExt = "mp3";
+		} else if (audio.canPlayType('audio/wav') != "") {
+			fileExt = "wav";
+		} else {
+			canPlay = false;
+		}
+	}
+
+	function testUseFile(cb) {
+		try {
+			if(canPlay) {
+				
+				audio.src = assetDir + "/1ssilence." + that.fileExt;
+				
+				try {
+					audio.play();
+					audio.addEventListener('timeupdate', function() {
+						audio.pause();
+						useFile = true;
+						cb();
+      				});
+
+      				setTimeout(function() {
+      					if(!useFile) {
+      						useFile = false;
+							cb();
+      					}
+      				}, 1000);
+				} catch (e) {
+					useFile = false;
+					cb();
 				}
-			});
+			} else {
+				useFile = false;
+				cb();
+			}
+		} catch(ex) {
+			canPlay = false;
+			useFile = false;
+			cb();
 		}
+	}
 
-		, testUseFile : function( callback ) {
-			var that = this;
-			try {
-				if(that.canPlay) {
-					that.audio.src = "/touchgames/luckyjoker/varRes/sound/1ssilence." + that.fileExt;
-					try {
-						that.audio.play();
-						that.audio.addEventListener('timeupdate', function() {
-							that.audio.pause();
-							that.useFile = true;
-							callback();
-	      				});
 
-	      				LJ.setTimeout(function() {
-	      					if(!that.useFile) {
-	      						that.useFile = false;
-								callback();
-	      					}
-	      				}, 500);
-					} catch (e) {
-						that.useFile = false;
+	function playFile(entry, callback) {
+		try {
+			if(canPlay && map) {
+				var aud = new Audio();
+				aud.src = map[entry].file + '.' + fileExt;
+				aud.play();
+				aud.addEventListener('ended', function() {
+					if(!!callback) {
 						callback();
 					}
-				} else {
-					that.useFile = false;
-					callback();
-				}
-			} catch(ex) {}
-		}
+				});
+			}
+		} catch(ex) {}
+	}
 
-		, playFile : function( entry , callback ) {
-			var that = this;
-			try {
-				if(that.canPlay && that.map && LJ.settings.sound) {
-					var aud = new Audio();
-					aud.src = that.map[entry].file + that.fileExt;
-					aud.play();
-					aud.addEventListener('ended', function() {
+	function playSpriteEntry(entry, callback) {
+		var that = this;
+		try {
+			if(firstTime) {
+				audio = document.getElementById(map.soundSprite);
+				firstTime = false;
+			} else {
+				audio.currentTime = map[entry].start;
+			}
+
+			if(canPlay && map && !!audio) {
+				audio.play();
+				var x = setInterval(function() {
+					if(audio.currentTime > map[entry].end) {
+						audio.pause();
 						if(callback) {
 							callback();
 						}
-					});
-				}
-			} catch(ex) {}
-		}
-
-		, playSpriteEntry : function ( entry , callback ) {
-			var that = this;
-			try {
-				if(that.firstTime) {
-					that.audio = document.getElementById(that.map.soundSprite);
-					that.firstTime = false;
-				} else {
-					that.audio.currentTime = that.map[entry].start;
-				}
-
-				if(that.canPlay && that.map && LJ.settings.sound) {
-					that.audio.play();
-					var x = setInterval(function() {
-						if(that.audio.currentTime > that.map[entry].end) {
-							that.audio.pause();
-							if(callback) {
-								callback();
-							}
-							clearInterval(x);
-						}
-					}, 20);
-				}
-			} catch(ex) {
-				console.log("Me cannot play no more: "+ex.message);
+						clearInterval(x);
+					}
+				}, 20);
 			}
+		} catch(ex) {
+			console.log("Me cannot play no more: "+ex.message);
 		}
-		
-	}*/
+	}
 
 	return {
-		init: init
+		init: init,
+		play: playFunc
 	}
 	
 }(window, window.document);
