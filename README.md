@@ -21,10 +21,10 @@ sound file directly after a user interaction.
 Include roadie.js and its assets in your file. To set it up, provide a map with all its necessary contents:
 
 ```
-&lt;audio id="mysprite"&gt;
-  &lt;source src="asset/myaudio.mp3"&gt;
-  &lt;source src="asset/myaudio.wav"&gt;
-&lt;/audio&gt;
+<audio id="mysprite">
+  <source src="asset/myaudio.mp3">
+  <source src="asset/myaudio.wav">
+</audio>
 ```
 
 ```
